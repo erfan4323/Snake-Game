@@ -7,7 +7,8 @@ Color green = { 173, 204, 96, 255 };
 Color darkGreen = { 43, 51, 24, 255 };
 
 int cellSize = 30;
-int cellCount = 25;
+int cellCount = 20;
+int offset = 75;
 
 double lastUpdateTime = 0;
 
@@ -35,8 +36,6 @@ bool ElementInDequeue(Vector2 element, std::deque<Vector2> dequeue)
 
 class Food
 {
-private:
-
 public:
 	Vector2 position;
 	Texture2D texture;
@@ -56,7 +55,7 @@ public:
 
 	void Draw()
 	{
-		DrawTexture(texture, position.x * cellSize, position.y * cellSize, WHITE);
+		DrawTexture(texture, offset + position.x * cellSize, offset + position.y * cellSize, WHITE);
 	}
 
 	Vector2 GenerateRandomCell()
@@ -96,7 +95,7 @@ public:
 		Rectangle segment;
 		for (const auto& i : body)
 		{
-			segment = Rectangle{ (float)i.x * cellSize, (float)i.y * cellSize, (float)cellSize, (float)cellSize };
+			segment = Rectangle{ (float)offset + i.x * cellSize, (float)offset + i.y * cellSize, (float)cellSize, (float)cellSize };
 			DrawRectangleRounded(segment, 0.5, 10, darkGreen);
 		}
 	}
@@ -125,6 +124,7 @@ public:
 	Snake snake = Snake();
 	Food food = Food(snake.body);
 	bool running = true;
+	int score = 0;
 
 	Game(){}
 	~Game(){}
@@ -134,6 +134,14 @@ public:
 		BeginDrawing();
 		{
 			ClearBackground(green);
+			DrawRectangleLinesEx(Rectangle{ (float)offset - 5,
+				(float)offset - 5, 
+				(float)cellCount * cellSize + 10, 
+				(float)cellCount * cellSize + 10 }, 
+				5, 
+				darkGreen);
+			DrawText("Retro Snake", offset - 5, 20, 40, darkGreen);
+			DrawText(TextFormat("%i", score), offset - 5, offset + cellSize * cellCount + 10, 40, darkGreen);
 			food.Draw();
 			snake.Draw();
 		}
@@ -156,6 +164,7 @@ public:
 		if (Vector2Equals(snake.body[0], food.position)) {
 			food.position = food.GenerateRandomPos(snake.body);
 			snake.addsegment = true;
+			score++;
 		}
 	}
 
@@ -182,12 +191,13 @@ public:
 		snake.Reset();
 		food.position = food.GenerateRandomPos(snake.body);
 		running = false;
+		score = 0;
 	}
 };
 
 int main()
 {
-	int resolution = cellCount * cellSize;
+	int resolution = 2 * offset + cellCount * cellSize;
 	InitWindow(resolution, resolution, "Retro Snake");
 	Image icon = LoadImage("Resources/LogoSbake.ico");
 	SetWindowIcon(icon);
