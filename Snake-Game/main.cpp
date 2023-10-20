@@ -1,4 +1,5 @@
 #include <deque>
+#include <iostream>
 #include "raylib.h"
 #include "raymath.h"
 
@@ -69,8 +70,10 @@ public:
 	{
 		Vector2 position = GenerateRandomCell();
 
-		while (ElementInDequeue(position, snakeBody))
+		do {
 			position = GenerateRandomCell();
+			std::cout << "food position : " << position.x << " " << position.y << std::endl;
+		} while (ElementInDequeue(position, snakeBody) || position.x >= cellCount || position.y >= cellCount);
 
 		return position;
 	}
@@ -83,6 +86,7 @@ private:
 public:
 	std::deque<Vector2> body = { Vector2{ 6, 9 }, Vector2{ 5, 9 }, Vector2{ 4, 9 } };
 	Vector2 dir = { 1, 0 };
+	bool addsegment = false;
 
 	Snake() {}
 	~Snake() {}
@@ -99,19 +103,31 @@ public:
 
 	void Update()
 	{
-		body.pop_back();
 		body.push_front(Vector2Add(body[0], dir));
+
+		if (addsegment)
+			addsegment = false;
+
+		else
+			body.pop_back();
+	}
+
+	void Reset()
+	{
+		body = { Vector2{6, 9}, Vector2{5, 9}, Vector2{4, 9} };
+		dir = { 1, 0 };
 	}
 };
 
 class Game
 {
 public:
-	Game(){}
-	~Game(){}
-
 	Snake snake = Snake();
 	Food food = Food(snake.body);
+	bool running = true;
+
+	Game(){}
+	~Game(){}
 
 	void Draw()
 	{
@@ -126,22 +142,45 @@ public:
 
 	void Update()
 	{
-		snake.Update();
-		CheckCollisionWithFood();
+		if (running)
+		{
+			snake.Update();
+			CheckCollisionWithFood();
+			CheckColisionsWithEdges();
+		}
 	}
 
 	void CheckCollisionWithFood()
 	{
 		if (Vector2Equals(snake.body[0], food.position)) {
 			food.position = food.GenerateRandomPos(snake.body);
+			snake.addsegment = true;
 		}
+	}
+
+	void CheckColisionsWithEdges()
+	{
+		if (snake.body[0].x == cellCount || snake.body[0].x == -1)
+			GameOver();
+
+		if (snake.body[0].y == cellCount || snake.body[0].y == -1)
+			GameOver();
+	}
+
+	void GameOver()
+	{
+		snake.Reset();
+		food.position = food.GenerateRandomPos(snake.body);
+		running = false;
 	}
 };
 
 int main()
 {
-	int resolution = cellCount * cellCount;
+	int resolution = cellCount * cellSize;
 	InitWindow(resolution, resolution, "Retro Snake");
+	Image icon = LoadImage("Resources/LogoSbake.ico");
+	SetWindowIcon(icon);
 
 	SetTargetFPS(60);
 	
@@ -149,12 +188,28 @@ int main()
 
 	while (!WindowShouldClose())
 	{
-		if (IsKeyPressed(KEY_UP) && game.snake.dir.y != 1) game.snake.dir = { 0, -1 };
-		if (IsKeyPressed(KEY_DOWN) && game.snake.dir.y != -1) game.snake.dir = { 0, 1 };
-		if (IsKeyPressed(KEY_LEFT) && game.snake.dir.x != 1) game.snake.dir = { -1, 0 };
-		if (IsKeyPressed(KEY_RIGHT) && game.snake.dir.x != -1) game.snake.dir = { 1, 0 };
+		if (IsKeyPressed(KEY_UP) && game.snake.dir.y != 1) 
+		{
+			game.snake.dir = { 0, -1 };
+			game.running = true;
+		}
+		if (IsKeyPressed(KEY_DOWN) && game.snake.dir.y != -1) 
+		{
+			game.snake.dir = { 0, 1 };
+			game.running = true;
+		}
+		if (IsKeyPressed(KEY_LEFT) && game.snake.dir.x != 1)
+		{
+			game.snake.dir = { -1, 0 };
+			game.running = true;
+		}
+		if (IsKeyPressed(KEY_RIGHT) && game.snake.dir.x != -1) 
+		{
+			game.snake.dir = { 1, 0 };
+			game.running = true;
+		}
 
-		if (EventTriggered(0.4)) game.Update();
+		if (EventTriggered(0.2)) game.Update();
 
 		game.Draw();
 	}
