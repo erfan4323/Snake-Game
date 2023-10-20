@@ -22,6 +22,16 @@ bool EventTriggered(double interval)
 	return false;
 }
 
+bool ElementInDequeue(Vector2 element, std::deque<Vector2> dequeue) 
+{
+	for (const auto& i : dequeue) 
+	{
+		if (Vector2Equals(i, element))
+			return true;
+	}
+	return false;
+}
+
 class Food
 {
 private:
@@ -30,12 +40,12 @@ public:
 	Vector2 position;
 	Texture2D texture;
 
-	Food()
+	Food(std::deque<Vector2> snakeBody)
 	{
 		Image image = LoadImage("Resources/food.png");
 		texture = LoadTextureFromImage(image);
 		UnloadImage(image);
-		position = GenerateRandomPos();
+		position = GenerateRandomPos(snakeBody);
 	}
 
 	~Food()
@@ -48,11 +58,21 @@ public:
 		DrawTexture(texture, position.x * cellSize, position.y * cellSize, WHITE);
 	}
 
-	Vector2 GenerateRandomPos()
+	Vector2 GenerateRandomCell()
 	{
 		float x = GetRandomValue(0, cellCount - 1);
 		float y = GetRandomValue(0, cellCount - 1);
 		return Vector2{ x, y };
+	}
+
+	Vector2 GenerateRandomPos(std::deque<Vector2> snakeBody)
+	{
+		Vector2 position = GenerateRandomCell();
+
+		while (ElementInDequeue(position, snakeBody))
+			position = GenerateRandomCell();
+
+		return position;
 	}
 };
 
@@ -84,30 +104,39 @@ public:
 	}
 };
 
-/*class Game
+class Game
 {
 public:
 	Game(){}
 	~Game(){}
 
-	
+	Snake snake = Snake();
+	Food food = Food(snake.body);
 
 	void Draw()
 	{
-		//BeginDrawing();
-		//{
-			//ClearBackground(green);
+		BeginDrawing();
+		{
+			ClearBackground(green);
 			food.Draw();
 			snake.Draw();
-		//}
-		//EndDrawing();
+		}
+		EndDrawing();
 	}
 
 	void Update()
 	{
 		snake.Update();
+		CheckCollisionWithFood();
 	}
-};*/
+
+	void CheckCollisionWithFood()
+	{
+		if (Vector2Equals(snake.body[0], food.position)) {
+			food.position = food.GenerateRandomPos(snake.body);
+		}
+	}
+};
 
 int main()
 {
@@ -116,27 +145,18 @@ int main()
 
 	SetTargetFPS(60);
 	
-	Snake snake = Snake();
-	Food food = Food();
+	Game game = Game();
 
 	while (!WindowShouldClose())
 	{
-		if (EventTriggered(0.4)) snake.Update();
-		
-		if (IsKeyPressed(KEY_UP) && snake.dir.y != 1) snake.dir = { 0, -1 };
-		if (IsKeyPressed(KEY_DOWN) && snake.dir.y != -1) snake.dir = { 0, 1 };
-		if (IsKeyPressed(KEY_LEFT) && snake.dir.x != 1) snake.dir = { -1, 0 };
-		if (IsKeyPressed(KEY_RIGHT) && snake.dir.x != -1) snake.dir = { 1, 0 };
+		if (IsKeyPressed(KEY_UP) && game.snake.dir.y != 1) game.snake.dir = { 0, -1 };
+		if (IsKeyPressed(KEY_DOWN) && game.snake.dir.y != -1) game.snake.dir = { 0, 1 };
+		if (IsKeyPressed(KEY_LEFT) && game.snake.dir.x != 1) game.snake.dir = { -1, 0 };
+		if (IsKeyPressed(KEY_RIGHT) && game.snake.dir.x != -1) game.snake.dir = { 1, 0 };
 
+		if (EventTriggered(0.4)) game.Update();
 
-		BeginDrawing();
-		{
-			ClearBackground(green);
-			snake.Draw();
-			food.Draw();
-		}
-		EndDrawing();
-
+		game.Draw();
 	}
 
 	CloseAudioDevice();
