@@ -145,12 +145,13 @@ public:
 		if (running)
 		{
 			snake.Update();
-			CheckCollisionWithFood();
+			CheckCollisionsWithFood();
 			CheckColisionsWithEdges();
+			CheckColisionsWithBody();
 		}
 	}
 
-	void CheckCollisionWithFood()
+	void CheckCollisionsWithFood()
 	{
 		if (Vector2Equals(snake.body[0], food.position)) {
 			food.position = food.GenerateRandomPos(snake.body);
@@ -164,6 +165,15 @@ public:
 			GameOver();
 
 		if (snake.body[0].y == cellCount || snake.body[0].y == -1)
+			GameOver();
+	}
+
+	void CheckColisionsWithBody()
+	{
+		std::deque<Vector2> headlessBody = snake.body;
+		headlessBody.pop_front();
+
+		if (ElementInDequeue(snake.body[0], headlessBody))
 			GameOver();
 	}
 
