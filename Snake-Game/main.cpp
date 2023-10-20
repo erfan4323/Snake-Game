@@ -1,40 +1,144 @@
+#include <deque>
 #include "raylib.h"
+#include "raymath.h"
 
-int main() {
-    // Initialization
-   //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+Color green = { 173, 204, 96, 255 };
+Color darkGreen = { 43, 51, 24, 255 };
 
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+int cellSize = 30;
+int cellCount = 25;
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
-    //--------------------------------------------------------------------------------------
+double lastUpdateTime = 0;
 
-    // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-        // Update
-        //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
+bool EventTriggered(double interval)
+{
+	double currTime = GetTime();
 
-        // Draw
-        //----------------------------------------------------------------------------------
-        BeginDrawing();
+	if (currTime - lastUpdateTime >= interval)
+	{
+		lastUpdateTime = currTime;
+		return true;
+	}
+	return false;
+}
 
-        ClearBackground(RAYWHITE);
+class Food
+{
+private:
 
-        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+public:
+	Vector2 position;
+	Texture2D texture;
 
-        EndDrawing();
-        //----------------------------------------------------------------------------------
-    }
+	Food()
+	{
+		Image image = LoadImage("Resources/food.png");
+		texture = LoadTextureFromImage(image);
+		UnloadImage(image);
+		position = GenerateRandomPos();
+	}
 
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
+	~Food()
+	{
+		UnloadTexture(texture);
+	}
 
-    return 0;
+	void Draw()
+	{
+		DrawTexture(texture, position.x * cellSize, position.y * cellSize, WHITE);
+	}
+
+	Vector2 GenerateRandomPos()
+	{
+		float x = GetRandomValue(0, cellCount - 1);
+		float y = GetRandomValue(0, cellCount - 1);
+		return Vector2{ x, y };
+	}
+};
+
+class Snake
+{
+private:
+
+public:
+	std::deque<Vector2> body = { Vector2{ 6, 9 }, Vector2{ 5, 9 }, Vector2{ 4, 9 } };
+	Vector2 dir = { 1, 0 };
+
+	Snake() {}
+	~Snake() {}
+
+	void Draw()
+	{
+		Rectangle segment;
+		for (const auto& i : body)
+		{
+			segment = Rectangle{ (float)i.x * cellSize, (float)i.y * cellSize, (float)cellSize, (float)cellSize };
+			DrawRectangleRounded(segment, 0.5, 10, darkGreen);
+		}
+	}
+
+	void Update()
+	{
+		body.pop_back();
+		body.push_front(Vector2Add(body[0], dir));
+	}
+};
+
+/*class Game
+{
+public:
+	Game(){}
+	~Game(){}
+
+	
+
+	void Draw()
+	{
+		//BeginDrawing();
+		//{
+			//ClearBackground(green);
+			food.Draw();
+			snake.Draw();
+		//}
+		//EndDrawing();
+	}
+
+	void Update()
+	{
+		snake.Update();
+	}
+};*/
+
+int main()
+{
+	int resolution = cellCount * cellCount;
+	InitWindow(resolution, resolution, "Retro Snake");
+
+	SetTargetFPS(60);
+	
+	Snake snake = Snake();
+	Food food = Food();
+
+	while (!WindowShouldClose())
+	{
+		if (EventTriggered(0.4)) snake.Update();
+		
+		if (IsKeyPressed(KEY_UP) && snake.dir.y != 1) snake.dir = { 0, -1 };
+		if (IsKeyPressed(KEY_DOWN) && snake.dir.y != -1) snake.dir = { 0, 1 };
+		if (IsKeyPressed(KEY_LEFT) && snake.dir.x != 1) snake.dir = { -1, 0 };
+		if (IsKeyPressed(KEY_RIGHT) && snake.dir.x != -1) snake.dir = { 1, 0 };
+
+
+		BeginDrawing();
+		{
+			ClearBackground(green);
+			snake.Draw();
+			food.Draw();
+		}
+		EndDrawing();
+
+	}
+
+	CloseAudioDevice();
+	return 0;
 }
