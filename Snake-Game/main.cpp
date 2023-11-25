@@ -193,6 +193,30 @@ public:
 		running = false;
 		score = 0;
 	}
+
+	void HandleInput()
+	{
+		if (IsKeyPressed(KEY_UP) && snake.dir.y != 1)
+		{
+			snake.dir = { 0, -1 };
+			running = true;
+		}
+		if (IsKeyPressed(KEY_DOWN) && snake.dir.y != -1)
+		{
+			snake.dir = { 0, 1 };
+			running = true;
+		}
+		if (IsKeyPressed(KEY_LEFT) && snake.dir.x != 1)
+		{
+			snake.dir = { -1, 0 };
+			running = true;
+		}
+		if (IsKeyPressed(KEY_RIGHT) && snake.dir.x != -1)
+		{
+			snake.dir = { 1, 0 };
+			running = true;
+		}
+	}
 };
 
 int main()
@@ -208,26 +232,7 @@ int main()
 
 	while (!WindowShouldClose())
 	{
-		if (IsKeyPressed(KEY_UP) && game.snake.dir.y != 1) 
-		{
-			game.snake.dir = { 0, -1 };
-			game.running = true;
-		}
-		if (IsKeyPressed(KEY_DOWN) && game.snake.dir.y != -1) 
-		{
-			game.snake.dir = { 0, 1 };
-			game.running = true;
-		}
-		if (IsKeyPressed(KEY_LEFT) && game.snake.dir.x != 1)
-		{
-			game.snake.dir = { -1, 0 };
-			game.running = true;
-		}
-		if (IsKeyPressed(KEY_RIGHT) && game.snake.dir.x != -1) 
-		{
-			game.snake.dir = { 1, 0 };
-			game.running = true;
-		}
+		game.HandleInput();
 
 		if (EventTriggered(0.2)) game.Update();
 
