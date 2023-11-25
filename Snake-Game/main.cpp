@@ -36,9 +36,11 @@ bool ElementInDequeue(Vector2 element, std::deque<Vector2> dequeue)
 
 class Food
 {
+private:
+	Texture2D texture;
+
 public:
 	Vector2 position;
-	Texture2D texture;
 
 	Food(std::deque<Vector2> snakeBody)
 	{
@@ -120,11 +122,14 @@ public:
 
 class Game
 {
-public:
+private:
+
 	Snake snake = Snake();
 	Food food = Food(snake.body);
 	bool running = true;
 	int score = 0;
+
+public:
 
 	Game(){}
 	~Game(){}
